@@ -1,0 +1,157 @@
+CREATE WAREHOUSE hedgehogharith_wh WITH
+WAREHOUSE_SIZE = XSmall
+INITIALLY_SUSPENDED = true;
+USE WAREHOUSE hedgehogharith_wh;
+
+CREATE OR REPLACE DATABASE BikeStoreDB;
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."SUPPLIERS" (
+    "SupplierID" INTEGER,
+    "SupplierName" VARCHAR(255),
+    "ContactName" VARCHAR(255),
+    "Phone" VARCHAR(50),
+    "Email" VARCHAR(255),
+    "Address" VARCHAR(255),
+    "City" VARCHAR(100),
+    "State" VARCHAR(100),
+    "ZipCode" INTEGER,
+    "BrandsSupplied" VARCHAR(255)
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."STORES" (
+    "StoreID" INTEGER,          -- Unique identifier for the store
+    "StoreName" VARCHAR(255),   -- Name of the store
+    "Phone" VARCHAR(50),        -- Phone number (including area code)
+    "Email" VARCHAR(255),       -- Email address
+    "Street" VARCHAR(255),      -- Street address
+    "City" VARCHAR(100),        -- City
+    "State" VARCHAR(100),       -- State or province
+    "ZipCode" INTEGER,       -- ZIP code (supports leading zeros)
+    CONSTRAINT pk_stores PRIMARY KEY ("StoreID") -- Primary key for unique product identification
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."STAFF" (
+    "StaffID" INTEGER,               -- Unique identifier for staff
+    "FirstName" VARCHAR(100),        -- First name of the staff member
+    "LastName" VARCHAR(100),         -- Last name of the staff member
+    "Email" VARCHAR(255),            -- Email address
+    "PhoneNumber" VARCHAR(50),       -- Phone number (including area code)
+    "Active" INTEGER,                -- Status: Active (TRUE) or Inactive (FALSE)
+    "StoreID" INTEGER,               -- Store ID (foreign key to STORES table)
+    "ManagerID" INTEGER,             -- Manager ID (self-referencing foreign key)
+    "Street" VARCHAR(255),           -- Street address
+    "City" VARCHAR(100),             -- City
+    "State" VARCHAR(100),            -- State or province
+    "EmploymentDate" DATE,           -- Employment start date
+    "CourtesyTitle" VARCHAR(50),     -- Courtesy title (e.g., Mr., Ms., Dr.)
+    "JobTitle" VARCHAR(100),         -- Job title
+    "ZipCode" INTEGER,            -- ZIP code (supports leading zeros)
+    CONSTRAINT pk_staff PRIMARY KEY ("StaffID") -- Primary key for unique product identification
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."PRODUCTS" (
+    "ProductID" INTEGER,          -- Unique identifier for the product
+    "ProductName" VARCHAR(255),   -- Name of the product
+    "BrandID" INTEGER,            -- Identifier for the brand (foreign key to BRANDS table)
+    "CategoryID" INTEGER,         -- Identifier for the category (foreign key to CATEGORIES table)
+    "ModelYear" INTEGER,          -- Year the model was introduced
+    "ListPrice" DECIMAL(10, 2),   -- List price of the product with two decimal places
+    CONSTRAINT pk_products PRIMARY KEY ("ProductID") -- Primary key for unique product identification
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."STOCKS" (
+    "StoreID" INTEGER,          -- Unique identifier for the store (foreign key to STORES table)
+    "ProductID" INTEGER,        -- Unique identifier for the product (foreign key to PRODUCTS table)
+    "Quantity" INTEGER,         -- Current quantity of the product in stock
+    "ReorderLevel" INTEGER,     -- Minimum stock level before reorder is triggered
+    "LeadTime" INTEGER,          -- Time (in days) to replenish stock after reorder
+    CONSTRAINT fk_store FOREIGN KEY ("StoreID") REFERENCES "BIKESTOREDB"."PUBLIC"."STORES"("StoreID"),
+    CONSTRAINT fk_product FOREIGN KEY ("ProductID") REFERENCES "BIKESTOREDB"."PUBLIC"."PRODUCTS"("ProductID")
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."CUSTOMERS" (
+    "CustomerID" INTEGER,                 -- Unique identifier for the customer
+    "FirstName" VARCHAR(100),             -- Customer's first name
+    "LastName" VARCHAR(100),              -- Customer's last name
+    "PhoneNumber" VARCHAR(50),            -- Customer's phone number
+    "Email" VARCHAR(255),                 -- Customer's email address
+    "Street" VARCHAR(255),                -- Customer's street address
+    "City" VARCHAR(100),                  -- Customer's city
+    "State" VARCHAR(100),                 -- Customer's state
+    "ZipCode" INTEGER,                -- Customer's zip code
+    "DateOfLastPurchase" DATE,            -- Date of the customer's last purchase
+    "LifetimeValue" DECIMAL(12, 2),       -- The total value the customer has contributed over time
+    "LoyaltyTier" VARCHAR(50),            -- Customer's loyalty tier (e.g., Bronze, Silver, Gold)
+    "DiscountApplied" DECIMAL(5, 2),      -- Discount applied to the customer, expressed as a percentage
+    CONSTRAINT pk_customers PRIMARY KEY ("CustomerID") -- Primary key for unique customer identification
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."ORDERS" (
+    "OrderID" INTEGER,                      -- Unique identifier for the order
+    "CustomerID" INTEGER,                   -- Unique identifier for the customer (foreign key to CUSTOMERS table)
+    "OrderStatus" VARCHAR(50),              -- Status of the order (e.g., Pending, Shipped, Delivered)
+    "OrderDate" DATE,                       -- Date the order was placed
+    "RequiredDate" DATE,                    -- Date the order is required by the customer
+    "ShippedDate" DATE,                     -- Date the order was shipped
+    "StoreID" INTEGER,                      -- Unique identifier for the store (foreign key to STORES table)
+    "StaffID" INTEGER,                      -- Unique identifier for the staff handling the order (foreign key to STAFF table)
+    "DiscountApplied" DECIMAL(5, 2),        -- Discount applied to the order in percentage (e.g., 10.50)
+    "Region" VARCHAR(100),                  -- Geographic region of the order
+    "SalesChannel" VARCHAR(50),             -- Sales channel (e.g., Online, In-Store)
+    "FinalPrice" DECIMAL(12, 2),            -- Final price of the order after discounts
+    CONSTRAINT pk_orders PRIMARY KEY ("OrderID"), -- Primary key for unique order identification
+    CONSTRAINT fk_customer FOREIGN KEY ("CustomerID") REFERENCES "BIKESTOREDB"."PUBLIC"."CUSTOMERS"("CustomerID"), -- Foreign key for customers
+    CONSTRAINT fk_store FOREIGN KEY ("StoreID") REFERENCES "BIKESTOREDB"."PUBLIC"."STORES"("StoreID"), -- Foreign key for stores
+    CONSTRAINT fk_staff FOREIGN KEY ("StaffID") REFERENCES "BIKESTOREDB"."PUBLIC"."STAFF"("StaffID") -- Foreign key for staff
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."PAYMENT DETAILS" (
+    "PaymentID" INTEGER,                   -- Unique identifier for the payment
+    "OrderID" INTEGER,                     -- Unique identifier for the order (foreign key to ORDERS table)
+    "PaymentType" VARCHAR(50),             -- Type of payment (e.g., Credit Card, Cash, Online)
+    "Amount" DECIMAL(10, 2),               -- Payment amount with two decimal places
+    "PaymentConfirmationNumber" VARCHAR(255), -- Unique confirmation number for the payment
+    "PaymentDate" DATE,                    -- Date the payment was made
+    CONSTRAINT pk_payments PRIMARY KEY ("PaymentID"),
+    CONSTRAINT fk_order FOREIGN KEY ("OrderID") REFERENCES "BIKESTOREDB"."PUBLIC"."ORDERS"("OrderID")
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."ORDERED ITEMS" (
+    "OrderID" INTEGER,                    -- Unique identifier for the order (foreign key to ORDERS table)
+    "ItemID" INTEGER,                     -- Unique identifier for the item in the order
+    "ProductID" INTEGER,                  -- Unique identifier for the product (foreign key to PRODUCTS table)
+    "Quantity" INTEGER,                   -- Quantity of the product in this order item
+    "ListPrice" DECIMAL(10, 2),           -- List price of the product
+    "Discount" DECIMAL(5, 2),             -- Discount applied to the product for this order item
+    "TotalPrice" DECIMAL(10, 2),          -- Total price after applying discount (Quantity * ListPrice - Discount)
+    CONSTRAINT pk_order_items PRIMARY KEY ("OrderID", "ItemID"),  -- Composite primary key for unique order item identification
+    CONSTRAINT fk_order FOREIGN KEY ("OrderID") REFERENCES "BIKESTOREDB"."PUBLIC"."ORDERS"("OrderID"), -- Foreign key for orders
+    CONSTRAINT fk_product FOREIGN KEY ("ProductID") REFERENCES "BIKESTOREDB"."PUBLIC"."PRODUCTS"("ProductID") -- Foreign key for products
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."CATEGORIES" (
+    "CategoryID" INTEGER,                 -- Unique identifier for the category
+    "CategoryName" VARCHAR(100),          -- Name of the category (e.g., "Bikes", "Accessories")
+    "Description" VARCHAR(255),           -- Description of the category
+    CONSTRAINT pk_categories PRIMARY KEY ("CategoryID")  -- Primary key for unique category identification
+);
+
+CREATE TABLE "BIKESTOREDB"."PUBLIC"."BRANDS" (
+    "BrandID" INTEGER,                    -- Unique identifier for the brand
+    "BrandName" VARCHAR(100),              -- Name of the brand (e.g., "Trek", "Shimano")
+    CONSTRAINT pk_brands PRIMARY KEY ("BrandID")  -- Primary key for unique brand identification
+);
+
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."SUPPLIERS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."STORES";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."STOCKS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."STAFF";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."PRODUCTS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."PAYMENT DETAILS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."ORDERS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."ORDERED ITEMS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."CUSTOMERS";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."CATEGORIES";
+SELECT * FROM "BIKESTOREDB"."PUBLIC"."BRANDS";
+
+
